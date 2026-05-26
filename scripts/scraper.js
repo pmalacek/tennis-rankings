@@ -35,6 +35,5 @@ export default async function scrape() {
   console.log("Scrape complete");
 }
 
-if (require.main === module) {
-  scrape();
+scrape();
 }
