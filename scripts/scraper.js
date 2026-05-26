@@ -19,49 +19,35 @@ async function scrape() {
     { waitUntil: "networkidle2" }
   );
 
-  console.log("Page loaded");
+  let allPlayers = [];
 
-  const players = await page.evaluate(() => {
-    const rows = document.querySelectorAll("table tbody tr");
+  while (allPlayers.length < 1000) {
+    console.log(`Scraping page, current total: ${allPlayers.length}`);
 
-    return Array.from(rows)
-      .map((row) => {
-        const cols = row.querySelectorAll("td");
-        if (cols.length < 6) return null;
+    // ✅ Wait for table to be present
+    await page.waitForSelector("table tbody tr");
 
-        return {
-          rank: parseInt(cols[0].innerText) || null,
-          name: cols[1].innerText.trim(),
-          country: cols[3].innerText.trim(),
-          points: parseFloat(cols[5].innerText) || 0,
-        };
-      })
-      .filter(Boolean);
-  });
+    const players = await page.evaluate(() => {
+      const rows = document.querySelectorAll("table tbody tr");
 
-  console.log(`Scraped ${players.length} players`);
+      return Array.from(rows)
+        .map((row) => {
+          const cols = row.querySelectorAll("td");
+          if (cols.length < 6) return null;
 
-  await browser.close();
+          return {
+            rank: parseInt(cols[0].innerText),
+            name: cols[1].innerText.trim(),
+            country: cols[3].innerText.trim(),
+            points: parseFloat(cols[5].innerText),
+          };
+        })
+        .filter(Boolean);
+    });
 
-  const today = new Date().toISOString().split("T")[0];
+    allPlayers.push(...players);
 
-  for (const p of players) {
-    try {
-      await db.query(
-        `INSERT INTO rankings_snapshots 
-         (player_name, rank, country, points, snapshot_date)
-         VALUES ($1,$2,$3,$4,$5)`,
-        [p.name, p.rank, p.country, p.points, today]
-      );
-    } catch (err) {
-      console.error("DB insert error:", err.message);
-    }
-  }
+    console.log(`Collected so far: ${allPlayers.length}`);
 
-  console.log("✅ Scrape complete");
-}
+    // ✅ Find next button
 
-scrape().catch((err) => {
-  console.error("❌ Scraper failed:", err);
-  process.exit(1);
-});
