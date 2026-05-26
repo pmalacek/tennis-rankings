@@ -1,20 +1,23 @@
-# trigger
-
 name: Weekly Scraper
 
 on:
+  workflow_dispatch:   # ✅ this enables manual run button
   schedule:
-    - cron: "0 2 * * 2"
-  workflow_dispatch:
+    - cron: "0 2 * * 2"   # ✅ every Tuesday
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
       - name: Install dependencies
         run: npm install
+
+      - name: Install Chromium
+        run: npx puppeteer browsers install chrome
 
       - name: Run scraper
         run: node scripts/scraper.js
