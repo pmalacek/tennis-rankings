@@ -1,6 +1,3 @@
-console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
-``
-
 import puppeteer from "puppeteer";
 import db from "../lib/db.js";
 
@@ -24,7 +21,6 @@ async function scrape() {
   while (allPlayers.length < 1000) {
     console.log(`Scraping page, current total: ${allPlayers.length}`);
 
-    // ✅ Wait for table to be present
     await page.waitForSelector("table tbody tr");
 
     const players = await page.evaluate(() => {
@@ -36,10 +32,10 @@ async function scrape() {
           if (cols.length < 6) return null;
 
           return {
-            rank: parseInt(cols[0].innerText),
-            name: cols[1].innerText.trim(),
-            country: cols[3].innerText.trim(),
-            points: parseFloat(cols[5].innerText),
+            rank: parseInt(cols[0]?.innerText),
+            name: cols[1]?.innerText.trim(),
+            country: cols[3]?.innerText.trim(),
+            points: parseFloat(cols[5]?.innerText),
           };
         })
         .filter(Boolean);
@@ -47,7 +43,12 @@ async function scrape() {
 
     allPlayers.push(...players);
 
-    console.log(`Collected so far: ${allPlayers.length}`);
+    console.log(`Collected: ${allPlayers.length}`);
 
-    // ✅ Find next button
+    const nextButton = await page.$("button[aria-label='Next page']");
+
+    if (!nextButton) {
+      console.log("No next button found.");
+      break;
+    }
 
