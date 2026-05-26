@@ -1,3 +1,6 @@
+console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+``
+
 import puppeteer from "puppeteer";
 import db from "../lib/db.js";
 
